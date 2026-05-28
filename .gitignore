@@ -18,6 +18,10 @@ out/
 # Generated OpenCode tool bundles
 .opencode/tools/*.js
 
+# Tool runtime caches
+.rustdoc-cache/
+**/.rustdoc-cache/
+
 # Environment variables
 .env
 .env.local
