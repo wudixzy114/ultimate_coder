@@ -4,6 +4,7 @@ import { EcosystemEventBus } from "./infrastructure/EventBus.js"
 import { Router } from "./infrastructure/Router.js"
 import { WorkspaceManager } from "./infrastructure/WorkspaceManager.js"
 import { Dashboard } from "./infrastructure/Dashboard.js"
+import { createDefaultToolRegistry } from "./infrastructure/ToolRegistry.js"
 import { Orchestrator } from "./workflow/Orchestrator.js"
 import { join } from "path"
 
@@ -28,8 +29,10 @@ async function main() {
   const router = new Router()
   const workspaceManager = new WorkspaceManager(PROJECT_ROOT)
   const dashboard = new Dashboard(join(STATE_DIR, "dashboard.json"), requirement)
+  const toolRegistry = createDefaultToolRegistry(join(STATE_DIR, "tools.json"))
+  await toolRegistry.persist()
 
-  const sessionManager = new SessionManager(client, eventBus, router)
+  const sessionManager = new SessionManager(client, eventBus, router, toolRegistry)
 
   // 2. 初始化Orchestrator
   const orchestrator = new Orchestrator(

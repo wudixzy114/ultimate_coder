@@ -35,6 +35,12 @@
 4. **先多后少，先复杂后简单** — 探索所有可能性，再找最优解
 5. **系统减负** — 能稳定实现的，不交给人去做
 
+### 商业级补充目标
+- **失败必须显式传播** — Agent、Session、工具调用或阶段失败时，不能把失败伪装成完成
+- **自动恢复优先，及时停止兜底** — 可从事件日志、状态文件和Dashboard恢复；超过超时、迭代上限或关键阶段失败则升级人工
+- **可观测性默认开启** — 事件、阶段、Agent状态、产出物和工具清单都落盘，便于实时监控和审计
+- **工具能力注册化** — 工具通过统一注册表暴露给OpenCode、Codex和系统层，新增工具只增加定义与实现，不改Agent组织模型
+
 ---
 
 ## 二、组织架构
@@ -189,21 +195,30 @@ ultimate_coder/
 │   │   ├── reviewer/SKILL.md
 │   │   └── tester/SKILL.md
 │   └── tools/
-│       └── tell_upper.ts            # 唯一的通信工具
+│       ├── tell_upper.ts            # 唯一的通信工具
+│       └── rustsearch.js            # 生成产物: Rust工具OpenCode适配层
 │
 ├── ecosystem/
 │   ├── package.json
 │   ├── tsconfig.json
+│   ├── scripts/
+│   │   └── deploy-opencode-tools.ts # 生成/部署OpenCode工具
 │   └── src/
 │       ├── index.ts                 # 入口
 │       ├── core/
 │       │   └── types.ts             # 类型定义
+│       ├── tools/
+│       │   ├── ToolCore.ts          # 工具核心抽象
+│       │   ├── index.ts             # 统一工具集合
+│       │   ├── rustsearchTool.ts    # 唯一维护的Rust工具逻辑
+│       │   └── opencodeAdapter.ts   # OpenCode工具适配器
 │       ├── infrastructure/
 │       │   ├── OpenCodeBridge.ts    # SDK桥接(server启停/health check)
 │       │   ├── SessionManager.ts    # Session生命周期
 │       │   ├── WorkspaceManager.ts  # Worktree管理
 │       │   ├── EventBus.ts          # 事件总线
 │       │   ├── Router.ts            # 路由表
+│       │   ├── ToolRegistry.ts      # 工具注册表(OpenCode/Codex/System)
 │       │   └── Dashboard.ts         # 状态展示
 │       └── workflow/
 │           ├── Orchestrator.ts      # 主编排(Pipeline)

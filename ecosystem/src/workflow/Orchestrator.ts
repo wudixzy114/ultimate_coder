@@ -78,6 +78,7 @@ export class Orchestrator {
       task: `用户需求:\n${requirement}\n\n请分析需求并编写PRD（产品需求文档），包含用户故事和验收标准。`,
     })
     this.state.phases.planning = prd
+    if (prd.status === "blocked") return await this.stopAsEscalated("策划阶段失败，已停止等待人工处理")
     this.state.phase = "developing"
     this.dashboard.updateArtifact("prd", ".ecosystem/planning/prd.md")
     await this.saveState()
@@ -90,6 +91,7 @@ export class Orchestrator {
       task: `请根据以下PRD进行架构设计并分配开发任务:\n\n${prd.output ?? "PRD已完成，请查看产出物"}`,
     })
     this.state.phases.developing = code
+    if (code.status === "blocked") return await this.stopAsEscalated("开发阶段失败，已停止等待人工处理")
     this.state.phase = "reviewing"
     this.dashboard.updateArtifact("code", ".ecosystem/development/merged")
     await this.saveState()
@@ -111,6 +113,7 @@ export class Orchestrator {
         task: `请根据以下审查反馈修复代码:\n\n${reviewResult.feedback}`,
       })
       this.state.phases[`iteration-${iteration}`] = fix
+      if (fix.status === "blocked") return await this.stopAsEscalated(`迭代修复 #${iteration} 失败，已停止等待人工处理`)
 
       reviewResult = await this.runReviewPhase(fix)
     }
@@ -138,6 +141,10 @@ export class Orchestrator {
     })
     this.state.phases.reviewing = reviewResult
 
+    if (reviewResult.status === "blocked") {
+      return { hasIssues: true, feedback: reviewResult.output ?? "审核阶段失败" }
+    }
+
     const output = reviewResult.output ?? ""
     const hasIssues = output.toLowerCase().includes("fail") ||
                       output.toLowerCase().includes("issue") ||
@@ -145,6 +152,15 @@ export class Orchestrator {
                       output.toLowerCase().includes("blocked")
 
     return { hasIssues, feedback: output }
+  }
+
+  private async stopAsEscalated(message: string): Promise<WorkflowState> {
+    this.state.phase = "escalated"
+    this.state.updatedAt = Date.now()
+    this.dashboard.updatePhase("escalated", this.state.iteration)
+    this.dashboard.updateAgent("system", "blocked", message)
+    await this.saveState()
+    return this.state
   }
 
   private async saveState(): Promise<void> {

@@ -15,6 +15,9 @@ dist/
 build/
 out/
 
+# Generated OpenCode tool bundles
+.opencode/tools/*.js
+
 # Environment variables
 .env
 .env.local

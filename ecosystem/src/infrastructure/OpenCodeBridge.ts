@@ -5,24 +5,29 @@ export class OpenCodeBridge {
   private serverUrl: string | null = null
 
   async start(port = 4096): Promise<OpencodeClient> {
-    const { client, server } = await createOpencode({
-      port,
-      hostname: "127.0.0.1",
-    })
+    let lastError: unknown
 
-    this.client = client
-    this.serverUrl = server.url
+    for (let offset = 0; offset < 5; offset++) {
+      const candidatePort = port + offset
+      try {
+        const { client, server } = await createOpencode({
+          port: candidatePort,
+          hostname: "127.0.0.1",
+        })
 
-    console.log(`[OpenCodeBridge] Server started at ${server.url}`)
+        this.client = client
+        this.serverUrl = server.url
 
-    try {
-      const health = await (client as any).global.health()
-      console.log(`[OpenCodeBridge] Health:`, health)
-    } catch {
-      console.log(`[OpenCodeBridge] Health check skipped`)
+        console.log(`[OpenCodeBridge] Server started at ${server.url}`)
+        await this.healthCheck(client)
+        return client
+      } catch (err) {
+        lastError = err
+        console.error(`[OpenCodeBridge] Failed to start on port ${candidatePort}:`, (err as Error).message)
+      }
     }
 
-    return client
+    throw new Error(`OpenCodeBridge failed to start after 5 ports: ${(lastError as Error | undefined)?.message ?? "unknown error"}`)
   }
 
   async connect(url: string): Promise<OpencodeClient> {
@@ -45,5 +50,14 @@ export class OpenCodeBridge {
     const client = this.getClient()
     const result = await client.app.agents()
     return result
+  }
+
+  private async healthCheck(client: OpencodeClient): Promise<void> {
+    try {
+      const health = await (client as any).global.health()
+      console.log(`[OpenCodeBridge] Health:`, health)
+    } catch {
+      console.log(`[OpenCodeBridge] Health check skipped`)
+    }
   }
 }

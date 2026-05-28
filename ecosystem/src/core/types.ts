@@ -76,6 +76,26 @@ export interface WorkerResult {
   sessionId?: string
   workspace?: string
   output?: string
+  error?: string
+}
+
+// ============================================================
+// Tool extensibility
+// ============================================================
+
+export type ToolAudience = "opencode" | "codex" | "system"
+
+export interface ToolDefinition {
+  name: string
+  description: string
+  audiences: ToolAudience[]
+  command?: string
+  promptHint: string
+}
+
+export interface ToolRegistryState {
+  tools: ToolDefinition[]
+  updatedAt: number
 }
 
 // ============================================================

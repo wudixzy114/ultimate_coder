@@ -43,6 +43,7 @@ export class EcosystemEventBus extends EventEmitter {
 
   async emit_event(event: AgentEvent): Promise<void> {
     this.history.push(event)
+    await this.persist(event)
 
     this.emit(`event:${event.to}`, event)
     this.emit("event:*", event)
@@ -51,12 +52,9 @@ export class EcosystemEventBus extends EventEmitter {
       handler(event)
     }
 
-    this.persist(event).catch(console.error)
   }
 
   async emitAndWait(event: AgentEvent): Promise<AgentEvent> {
-    await this.emit_event(event)
-
     return new Promise<AgentEvent>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pendingReplies.delete(event.id)
@@ -73,6 +71,11 @@ export class EcosystemEventBus extends EventEmitter {
       }, this.timeoutMs)
 
       this.pendingReplies.set(event.id, { resolve, reject, timer })
+      this.emit_event(event).catch((err) => {
+        clearTimeout(timer)
+        this.pendingReplies.delete(event.id)
+        reject(err)
+      })
     })
   }
 
@@ -92,7 +95,7 @@ export class EcosystemEventBus extends EventEmitter {
     )
 
     this.history.push(replyEvent)
-    this.persist(replyEvent).catch(console.error)
+    await this.persist(replyEvent)
 
     if (pending) {
       clearTimeout(pending.timer)
@@ -123,7 +126,15 @@ export class EcosystemEventBus extends EventEmitter {
     try {
       const data = await readFile(this.persistPath, "utf-8")
       const lines = data.split("\n").filter(Boolean)
-      this.history = lines.map(l => JSON.parse(l) as AgentEvent)
+      const recovered: AgentEvent[] = []
+      for (const line of lines) {
+        try {
+          recovered.push(JSON.parse(line) as AgentEvent)
+        } catch (err) {
+          console.error("[EventBus] skipped corrupt event line:", err)
+        }
+      }
+      this.history = recovered.sort((a, b) => a.timestamp - b.timestamp)
     } catch {
       this.history = []
     }

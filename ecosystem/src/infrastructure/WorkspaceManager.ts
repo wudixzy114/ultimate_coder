@@ -1,4 +1,4 @@
-import { execSync } from "child_process"
+import { spawnSync } from "child_process"
 import { existsSync } from "fs"
 import { join } from "path"
 
@@ -7,21 +7,29 @@ export class WorkspaceManager {
 
   constructor(private projectRoot: string) {}
 
-  private exec(cmd: string): string {
-    return execSync(cmd, { cwd: this.projectRoot, encoding: "utf-8" }).trim()
+  private git(args: string[], cwd = this.projectRoot): string {
+    const result = spawnSync("git", args, { cwd, encoding: "utf-8" })
+    if (result.status !== 0) {
+      throw new Error((result.stderr || result.stdout || `git ${args.join(" ")} failed`).trim())
+    }
+    return (result.stdout ?? "").trim()
   }
 
-  private execNoThrow(cmd: string): { stdout: string; exitCode: number } {
-    try {
-      const stdout = execSync(cmd, { cwd: this.projectRoot, encoding: "utf-8" }).trim()
-      return { stdout, exitCode: 0 }
-    } catch (err: any) {
-      return { stdout: err.stdout ?? "", exitCode: err.status ?? 1 }
+  private gitNoThrow(args: string[], cwd = this.projectRoot): { stdout: string; stderr: string; exitCode: number } {
+    const result = spawnSync("git", args, { cwd, encoding: "utf-8" })
+    return {
+      stdout: (result.stdout ?? "").trim(),
+      stderr: (result.stderr ?? "").trim(),
+      exitCode: result.status ?? 1,
     }
   }
 
   async allocate(agentId: string, taskName: string): Promise<string> {
-    const sanitized = taskName.replace(/\s+/g, "-").toLowerCase()
+    const sanitized = taskName
+      .replace(/[^\p{L}\p{N}._-]+/gu, "-")
+      .replace(/^-+|-+$/g, "")
+      .toLowerCase()
+      .slice(0, 48) || "task"
     const branch = `feat/${agentId}-${sanitized}`
     const worktreePath = join(this.projectRoot, ".worktrees", `${agentId}-${sanitized}`)
 
@@ -31,7 +39,7 @@ export class WorkspaceManager {
     }
 
     try {
-      this.exec(`git worktree add "${worktreePath}" -b ${branch}`)
+      this.git(["worktree", "add", worktreePath, "-b", branch])
       this.worktrees.set(agentId, worktreePath)
       return worktreePath
     } catch (err) {
@@ -49,17 +57,21 @@ export class WorkspaceManager {
     if (!worktreePath) return { success: false, conflicts: ["No worktree found"] }
 
     try {
-      this.execNoThrow(`git add -A`)
-      this.execNoThrow(`git commit -m "${message}"`)
+      this.git(["add", "-A"], worktreePath)
+      const commit = this.gitNoThrow(["commit", "-m", message], worktreePath)
+      if (commit.exitCode !== 0 && !commit.stdout.includes("nothing to commit") && !commit.stderr.includes("nothing to commit")) {
+        return { success: false, conflicts: [commit.stderr || commit.stdout || "Commit failed"] }
+      }
 
-      const branch = this.exec(`git rev-parse --abbrev-ref HEAD`)
-      this.execNoThrow(`git checkout main`)
-      const result = this.execNoThrow(`git merge ${branch} --no-ff -m "merge: ${message}"`)
+      const branch = this.git(["rev-parse", "--abbrev-ref", "HEAD"], worktreePath)
+      const baseBranch = this.resolveBaseBranch()
+      this.git(["checkout", baseBranch])
+      const result = this.gitNoThrow(["merge", branch, "--no-ff", "-m", `merge: ${message}`])
 
       if (result.exitCode !== 0) {
-        const conflicts = this.execNoThrow(`git diff --name-only --diff-filter=U`)
+        const conflicts = this.gitNoThrow(["diff", "--name-only", "--diff-filter=U"])
           .stdout.split("\n").filter(Boolean)
-        this.execNoThrow(`git merge --abort`)
+        this.gitNoThrow(["merge", "--abort"])
         return { success: false, conflicts }
       }
 
@@ -75,7 +87,7 @@ export class WorkspaceManager {
     if (!worktreePath) return
 
     try {
-      this.execNoThrow(`git worktree remove "${worktreePath}" --force`)
+      this.gitNoThrow(["worktree", "remove", worktreePath, "--force"])
       this.worktrees.delete(agentId)
     } catch (err) {
       console.error(`[WorkspaceManager] Cleanup failed for ${agentId}:`, err)
@@ -86,5 +98,13 @@ export class WorkspaceManager {
     for (const agentId of this.worktrees.keys()) {
       await this.cleanup(agentId)
     }
+  }
+
+  private resolveBaseBranch(): string {
+    if (this.gitNoThrow(["show-ref", "--verify", "--quiet", "refs/heads/main"]).exitCode === 0) return "main"
+    if (this.gitNoThrow(["show-ref", "--verify", "--quiet", "refs/heads/master"]).exitCode === 0) return "master"
+    const current = this.gitNoThrow(["rev-parse", "--abbrev-ref", "HEAD"]).stdout
+    if (current && current !== "HEAD") return current
+    throw new Error("Cannot resolve base branch")
   }
 }

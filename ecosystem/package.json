@@ -5,13 +5,17 @@
   "scripts": {
     "build": "tsc",
     "start": "tsx src/index.ts",
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "tools:deploy:local": "tsx scripts/deploy-opencode-tools.ts --target local",
+    "tools:deploy:global": "tsx scripts/deploy-opencode-tools.ts --target global"
   },
   "dependencies": {
+    "@opencode-ai/plugin": "^1.15.11",
     "@opencode-ai/sdk": "latest",
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "esbuild": "^0.25.0",
     "typescript": "^5.5.0",
     "tsx": "^4.16.0",
     "@types/node": "^22.0.0"

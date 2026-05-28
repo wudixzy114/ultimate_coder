@@ -2,12 +2,14 @@ import type { OpencodeClient } from "@opencode-ai/sdk"
 import type { AgentProfile } from "../core/types.js"
 import type { EcosystemEventBus } from "./EventBus.js"
 import type { Router } from "./Router.js"
+import type { ToolRegistry } from "./ToolRegistry.js"
 
 export class SessionManager {
   constructor(
     private client: OpencodeClient,
     private eventBus: EcosystemEventBus,
-    private router: Router
+    private router: Router,
+    private toolRegistry?: ToolRegistry
   ) {}
 
   async createSession(agent: AgentProfile): Promise<string> {
@@ -42,6 +44,8 @@ ${pendingText}
 - content: 你要说的内容
 - status: completed | blocked | need_decision | question
 - artifacts: 相关文件路径列表(可选)
+
+${this.toolRegistry?.promptFor("opencode") ?? ""}
 
 ## 原则
 - 不需要知道上级是谁，调用 tell_upper 即可，系统自动路由
