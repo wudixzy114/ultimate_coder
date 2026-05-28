@@ -12,6 +12,9 @@ export function createOpenCodeTool<TArgs extends object>(definition: ManagedTool
       return await definition.run(args as TArgs, {
         cwd: context.directory ?? process.cwd(),
         signal: context.abort,
+        agent: context.agent,
+        eventBus: (context as any).eventBus,
+        router: (context as any).router,
       })
     },
   })

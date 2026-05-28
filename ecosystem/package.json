@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "test": "tsx --test test/**/*.test.ts",
-    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json",
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
     "tools:deploy:local": "tsx scripts/deploy-opencode-tools.ts --target local",

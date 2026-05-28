@@ -50,6 +50,7 @@ export const rustlocaldocTool: ManagedToolDefinition<RustLocalDocArgs> = {
   description: "Search local Rust rustdoc HTML from the installed toolchain and the current project's target/doc, generating cargo docs when needed.",
   promptHint: "Use for Rust API answers that should match the local toolchain or current Cargo project dependencies. Prefer this before network rustsearch for std/core/alloc and project crate docs. Actions: search/item/sources.",
   audiences: ["opencode", "codex"],
+  category: "extension",
   command: "rustlocaldoc({ action, query?, crate?, crateName?, item?, limit?, autoGenerate?, maxChars? })",
   args: {
     action: {

@@ -50,6 +50,7 @@ export const rustsearchTool: ManagedToolDefinition<RustSearchArgs> = {
   description: "查询 Rust 官方文档、标准库条目、crate 元数据、docs.rs 文档入口和版本迁移资料。",
   promptHint: "需要 Rust API、crate 元数据、标准库条目、具体条目页面、显式文档URL或版本迁移资料时使用。action 支持 search/crate/item/std/migrations/url/sources。",
   audiences: ["opencode", "codex"],
+  category: "extension",
   command: "rustsearch({ action, query?, crate?, crateName?, item?, url?, version?, limit?, refresh? })",
   args: {
     action: {

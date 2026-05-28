@@ -34,10 +34,10 @@ export class ToolRegistry {
     if (tools.length === 0) return ""
 
     return [
-      "## 可用扩展工具",
+      "## Available Managed Tools",
       ...tools.map(tool => {
-        const command = tool.command ? `\n  调用方式: ${tool.command}` : ""
-        return `- ${tool.name}: ${tool.promptHint}${command}`
+        const command = tool.command ? `\n  Usage: ${tool.command}` : ""
+        return `- ${tool.name} [${tool.category}]: ${tool.promptHint}${command}`
       }),
     ].join("\n")
   }
@@ -59,22 +59,16 @@ export class ToolRegistry {
 export function createDefaultToolRegistry(persistPath?: string): ToolRegistry {
   const registry = new ToolRegistry(persistPath)
 
-  registry.registerAll([
-    {
-      name: "tell_upper",
-      description: "向当前 Agent 的上级汇报、提问或升级阻塞。",
-      audiences: ["opencode", "codex", "system"],
-      command: "tell_upper(content, status, artifacts?)",
-      promptHint: "唯一主动通信工具。任务完成、遇到阻塞或需要决策时使用，系统自动路由到上级。",
-    },
-    ...managedTools.map(tool => ({
+  registry.registerAll(
+    managedTools.map(tool => ({
       name: tool.name,
       description: tool.description,
       audiences: tool.audiences,
+      category: tool.category,
       command: tool.command,
       promptHint: tool.promptHint,
-    })),
-  ])
+    }))
+  )
 
   return registry
 }

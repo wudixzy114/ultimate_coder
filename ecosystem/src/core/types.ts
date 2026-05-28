@@ -84,11 +84,13 @@ export interface WorkerResult {
 // ============================================================
 
 export type ToolAudience = "opencode" | "codex" | "system"
+export type ToolCategory = "internal" | "extension"
 
 export interface ToolDefinition {
   name: string
   description: string
   audiences: ToolAudience[]
+  category: ToolCategory
   command?: string
   promptHint: string
 }
