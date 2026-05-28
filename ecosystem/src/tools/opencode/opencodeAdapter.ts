@@ -1,5 +1,5 @@
 import { tool } from "@opencode-ai/plugin"
-import type { ManagedToolDefinition, ToolArgDefinition } from "./ToolCore.js"
+import type { ManagedToolDefinition, ToolArgDefinition } from "../core/ToolCore.js"
 
 export function createOpenCodeTool<TArgs extends object>(definition: ManagedToolDefinition<TArgs>) {
   return tool({

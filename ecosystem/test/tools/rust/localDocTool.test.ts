@@ -5,7 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { promisify } from "node:util";
-import { runRustLocalDoc } from "../src/tools/rustlocaldocTool.js";
+import { runRustLocalDoc } from "../../../src/tools/rust/localDocTool.js";
 
 const execFileAsync = promisify(execFile);
 const TEMP_PREFIX = "ultimate-coder-rustlocaldoc-test-";

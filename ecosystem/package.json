@@ -5,6 +5,7 @@
   "scripts": {
     "build": "tsc",
     "test": "tsx --test test/**/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json --noEmit",
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
     "tools:deploy:local": "tsx scripts/deploy-opencode-tools.ts --target local",

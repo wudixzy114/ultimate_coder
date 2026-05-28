@@ -56,7 +56,7 @@ for (const tool of tools) {
 
 function opencodeEntryFor(toolName: string): string {
   return [
-    `import { createOpenCodeTool } from "./src/tools/opencodeAdapter.js"`,
+    `import { createOpenCodeTool } from "./src/tools/opencode/opencodeAdapter.js"`,
     `import { managedTools } from "./src/tools/index.js"`,
     ``,
     `const definition = managedTools.find(tool => tool.name === ${JSON.stringify(toolName)})`,

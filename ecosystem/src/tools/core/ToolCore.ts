@@ -1,4 +1,4 @@
-import type { ToolAudience } from "../core/types.js"
+import type { ToolAudience } from "../../core/types.js"
 
 export type ToolArgDefinition =
   | { type: "string"; description: string; optional?: boolean }

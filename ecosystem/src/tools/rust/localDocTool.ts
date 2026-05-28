@@ -2,7 +2,7 @@ import { execFile } from "node:child_process"
 import { access, readFile, stat } from "node:fs/promises"
 import path from "node:path"
 import { promisify } from "node:util"
-import type { ManagedToolDefinition, ToolExecutionContext } from "./ToolCore.js"
+import type { ManagedToolDefinition, ToolExecutionContext } from "../core/ToolCore.js"
 
 const execFileAsync = promisify(execFile)
 

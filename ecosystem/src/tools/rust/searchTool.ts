@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto"
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises"
 import path from "node:path"
-import type { ManagedToolDefinition, ToolExecutionContext } from "./ToolCore.js"
+import type { ManagedToolDefinition, ToolExecutionContext } from "../core/ToolCore.js"
 
 export type RustSearchAction = "search" | "crate" | "item" | "std" | "migrations" | "url" | "sources"
 
